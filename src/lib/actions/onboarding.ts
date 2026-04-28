@@ -45,8 +45,10 @@ export async function createTenant(formData: FormData): Promise<OnboardingResult
     })
 
   if (tenantError) {
+    console.error('[onboarding] tenant create failed:', tenantError)
     return { error: 'Failed to create business: ' + tenantError.message }
   }
+  console.log('[onboarding] tenant created:', tenantId)
 
   // Create owner membership
   const displayName = user.user_metadata?.display_name || user.email || 'Owner'
@@ -63,8 +65,10 @@ export async function createTenant(formData: FormData): Promise<OnboardingResult
     })
 
   if (memberError) {
+    console.error('[onboarding] member create failed:', memberError)
     return { error: 'Failed to create membership: ' + memberError.message }
   }
+  console.log('[onboarding] member created:', memberId)
 
   // Seed default metrics from trade_defaults
   const { data: defaults, error: defaultsError } = await supabase
@@ -86,11 +90,14 @@ export async function createTenant(formData: FormData): Promise<OnboardingResult
     owner_member_id: memberId,
   }))
 
+  console.log('[onboarding] seeding metrics:', metricsToInsert.length, 'for tenant', tenantId)
+
   const { error: metricsError } = await supabase
     .from('scorecard_metrics')
     .insert(metricsToInsert)
 
   if (metricsError) {
+    console.error('[onboarding] metric seed failed:', metricsError)
     return { error: 'Failed to seed metrics: ' + metricsError.message }
   }
 
