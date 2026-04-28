@@ -33,3 +33,31 @@ export function getWeekStart(
 export function getCurrentWeekStart(timezone: string = 'UTC'): string {
   return getWeekStart(new Date(), timezone)
 }
+
+/**
+ * Get the Monday 7 days before the given week start.
+ * Input and output are both YYYY-MM-DD strings.
+ */
+export function getPreviousWeekStart(weekStart: string): string {
+  const [year, month, day] = weekStart.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  date.setDate(date.getDate() - 7)
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+/**
+ * Format a YYYY-MM-DD week start as "Month Day, Year".
+ * Example: "2026-04-27" → "April 27, 2026"
+ */
+export function formatWeekLabel(weekStart: string): string {
+  const [year, month, day] = weekStart.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
