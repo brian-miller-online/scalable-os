@@ -16,6 +16,14 @@ export default function SettingsPage() {
       <h1 className="text-xl font-bold">Settings</h1>
       <p className="text-sm text-gray-500">Settings UI — Task 8</p>
 
+      <a
+        href="/settings/metrics"
+        className="block w-full rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        style={{ minHeight: '44px' }}
+      >
+        Edit Metrics →
+      </a>
+
       <div className="border-t pt-4">
         <button
           type="button"

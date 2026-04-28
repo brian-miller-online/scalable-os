@@ -349,6 +349,7 @@ export type Database = {
       }
       trade_defaults: {
         Row: {
+          aggregation: string
           category: string
           description: string | null
           id: string
@@ -358,6 +359,7 @@ export type Database = {
           trade_type: string
         }
         Insert: {
+          aggregation?: string
           category?: string
           description?: string | null
           id?: string
@@ -367,6 +369,7 @@ export type Database = {
           trade_type: string
         }
         Update: {
+          aggregation?: string
           category?: string
           description?: string | null
           id?: string

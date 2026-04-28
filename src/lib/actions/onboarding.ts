@@ -73,7 +73,7 @@ export async function createTenant(formData: FormData): Promise<OnboardingResult
   // Seed default metrics from trade_defaults
   const { data: defaults, error: defaultsError } = await supabase
     .from('trade_defaults')
-    .select('metric_name, metric_type, category, sort_order')
+    .select('metric_name, metric_type, category, sort_order, description, aggregation')
     .eq('trade_type', tradeType)
     .order('sort_order')
 
@@ -87,6 +87,8 @@ export async function createTenant(formData: FormData): Promise<OnboardingResult
     metric_type: d.metric_type,
     category: d.category,
     sort_order: d.sort_order,
+    description: d.description,
+    aggregation: d.aggregation,
     owner_member_id: memberId,
   }))
 
