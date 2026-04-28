@@ -16,7 +16,7 @@ export const STATUS_COLORS: Record<Exclude<StatusColor, 'not_set'>, string> = {
 
 export const NOTE_REQUIRED_COLORS: StatusColor[] = ['yellow', 'light_red', 'dark_red']
 
-export const NOTE_PLACEHOLDERS: Record<string, string> = {
+export const NOTE_PLACEHOLDERS: Partial<Record<StatusColor, string>> = {
   yellow: "What's your plan to catch up?",
   light_red: 'What happened?',
   dark_red: "What went wrong? What's Plan B?",
