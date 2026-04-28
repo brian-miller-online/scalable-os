@@ -29,16 +29,20 @@ export async function createTenant(formData: FormData): Promise<OnboardingResult
     return { error: 'Not authenticated' }
   }
 
+  // Generate IDs client-side to avoid .select() hitting RLS SELECT policy
+  // (user has no tenant membership yet, so SELECT on tenants is blocked)
+  const tenantId = crypto.randomUUID()
+  const memberId = crypto.randomUUID()
+
   // Create tenant
-  const { data: tenant, error: tenantError } = await supabase
+  const { error: tenantError } = await supabase
     .from('tenants')
     .insert({
+      id: tenantId,
       name: businessName,
       trade_type: tradeType,
       team_size: teamSize,
     })
-    .select('id')
-    .single()
 
   if (tenantError) {
     return { error: 'Failed to create business: ' + tenantError.message }
@@ -47,17 +51,16 @@ export async function createTenant(formData: FormData): Promise<OnboardingResult
   // Create owner membership
   const displayName = user.user_metadata?.display_name || user.email || 'Owner'
 
-  const { data: member, error: memberError } = await supabase
+  const { error: memberError } = await supabase
     .from('tenant_members')
     .insert({
-      tenant_id: tenant.id,
+      id: memberId,
+      tenant_id: tenantId,
       user_id: user.id,
       role: 'owner',
       display_name: displayName,
       email: user.email,
     })
-    .select('id')
-    .single()
 
   if (memberError) {
     return { error: 'Failed to create membership: ' + memberError.message }
@@ -75,12 +78,12 @@ export async function createTenant(formData: FormData): Promise<OnboardingResult
   }
 
   const metricsToInsert = defaults.map((d) => ({
-    tenant_id: tenant.id,
+    tenant_id: tenantId,
     name: d.metric_name,
     metric_type: d.metric_type,
     category: d.category,
     sort_order: d.sort_order,
-    owner_member_id: member.id,
+    owner_member_id: memberId,
   }))
 
   const { error: metricsError } = await supabase
