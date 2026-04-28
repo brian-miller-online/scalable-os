@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getWeekStart, getPreviousWeekStart } from '@/utils/week'
 import { WeekHeader } from '@/components/scorecard/week-header'
+import { MonthlyActuals } from '@/components/scorecard/monthly-actuals'
 import { ScorecardBody } from './scorecard-body'
 
 // Category display order
@@ -13,6 +14,7 @@ function groupByCategory(
     name: string
     description: string | null
     metric_type: string
+    aggregation: string
     category: string
     sort_order: number
     target_value: number | null
@@ -94,7 +96,7 @@ export default async function ScorecardPage({
   // Fetch metrics
   const { data: metrics } = await supabase
     .from('scorecard_metrics')
-    .select('id, name, description, metric_type, category, sort_order, target_value')
+    .select('id, name, description, metric_type, category, sort_order, target_value, aggregation')
     .eq('tenant_id', member.tenant_id)
     .eq('is_active', true)
     .order('category')
@@ -136,6 +138,52 @@ export default async function ScorecardPage({
     (previousEntries || []).map((e) => [e.metric_id, { value: e.value }])
   )
 
+  // Fetch monthly entries for month-to-date calculations
+  const now = new Date()
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const nextMonth = now.getMonth() === 11
+    ? `${now.getFullYear() + 1}-01-01`
+    : `${now.getFullYear()}-${String(now.getMonth() + 2).padStart(2, '0')}-01`
+
+  const { data: monthlyEntries } = await supabase
+    .from('scorecard_entries')
+    .select('metric_id, value, week_start')
+    .eq('tenant_id', member.tenant_id)
+    .gte('week_start', monthStart)
+    .lt('week_start', nextMonth)
+    .order('week_start')
+
+  // Calculate monthly actuals per metric
+  const monthlyByMetric = new Map<string, number[]>()
+  for (const entry of monthlyEntries || []) {
+    if (entry.value == null) continue
+    const existing = monthlyByMetric.get(entry.metric_id) || []
+    existing.push(entry.value)
+    monthlyByMetric.set(entry.metric_id, existing)
+  }
+
+  const monthlySummaries = metrics.map((m) => {
+    const values = monthlyByMetric.get(m.id) || []
+    let monthlyValue: number | null = null
+    if (values.length > 0) {
+      if (m.aggregation === 'sum') {
+        monthlyValue = values.reduce((a, b) => a + b, 0)
+      } else if (m.aggregation === 'average') {
+        monthlyValue = values.reduce((a, b) => a + b, 0) / values.length
+      } else {
+        // 'latest' — last value in chronological order
+        monthlyValue = values[values.length - 1]
+      }
+    }
+    return {
+      name: m.name,
+      metric_type: m.metric_type,
+      aggregation: m.aggregation,
+      target_value: m.target_value,
+      monthlyValue,
+    }
+  })
+
   // Group metrics by category
   const groups = groupByCategory(metrics)
   const orderedKeys = sortedCategoryKeys(groups)
@@ -172,6 +220,8 @@ export default async function ScorecardPage({
         weekStart={weekStart}
         memberId={member.id}
       />
+
+      <MonthlyActuals metrics={monthlySummaries} />
     </div>
   )
 }
