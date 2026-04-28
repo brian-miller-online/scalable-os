@@ -36,8 +36,8 @@ export function ColorPicker({
             <span
               className="flex items-center justify-center rounded-full"
               style={{
-                width: '32px',
-                height: '32px',
+                width: '36px',
+                height: '36px',
                 backgroundColor: STATUS_COLORS[color],
               }}
             >

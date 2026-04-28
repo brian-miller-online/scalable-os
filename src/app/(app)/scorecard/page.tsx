@@ -83,7 +83,11 @@ export default async function ScorecardPage({
   const currentWeekStart = getWeekStart(new Date(), timezone)
 
   const params = await searchParams
-  const weekStart = params.week || currentWeekStart
+  const weekParam = params.week
+  const weekStart =
+    weekParam && /^\d{4}-\d{2}-\d{2}$/.test(weekParam)
+      ? weekParam
+      : currentWeekStart
   const previousWeekStart = getPreviousWeekStart(weekStart)
 
   // Fetch metrics
