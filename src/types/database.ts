@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       events: {
@@ -179,6 +204,7 @@ export type Database = {
           category: string
           created_at: string | null
           data_source: string | null
+          description: string | null
           id: string
           is_active: boolean | null
           metric_type: string
@@ -194,6 +220,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           data_source?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean | null
           metric_type?: string
@@ -209,6 +236,7 @@ export type Database = {
           category?: string
           created_at?: string | null
           data_source?: string | null
+          description?: string | null
           id?: string
           is_active?: boolean | null
           metric_type?: string
@@ -322,6 +350,7 @@ export type Database = {
       trade_defaults: {
         Row: {
           category: string
+          description: string | null
           id: string
           metric_name: string
           metric_type: string
@@ -330,6 +359,7 @@ export type Database = {
         }
         Insert: {
           category?: string
+          description?: string | null
           id?: string
           metric_name: string
           metric_type?: string
@@ -338,6 +368,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          description?: string | null
           id?: string
           metric_name?: string
           metric_type?: string
@@ -545,6 +576,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

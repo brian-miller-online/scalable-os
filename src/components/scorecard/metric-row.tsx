@@ -10,6 +10,7 @@ type MetricRowProps = {
   metric: {
     id: string
     name: string
+    description: string | null
     metric_type: string
     target_value: number | null
   }
@@ -138,6 +139,9 @@ export function MetricRow({
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="font-medium text-sm truncate">{metric.name}</p>
+          {metric.description && (
+            <p className="text-xs text-gray-400">{metric.description}</p>
+          )}
           {lastWeekEntry?.value != null && (
             <p className="text-xs text-gray-400">Last week: {lastWeekDisplay}</p>
           )}

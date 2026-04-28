@@ -8,6 +8,7 @@ type CategorizedMetric = {
   metric: {
     id: string
     name: string
+    description: string | null
     metric_type: string
     target_value: number | null
   }

@@ -11,6 +11,7 @@ function groupByCategory(
   metrics: Array<{
     id: string
     name: string
+    description: string | null
     metric_type: string
     category: string
     sort_order: number
@@ -93,7 +94,7 @@ export default async function ScorecardPage({
   // Fetch metrics
   const { data: metrics } = await supabase
     .from('scorecard_metrics')
-    .select('id, name, metric_type, category, sort_order, target_value')
+    .select('id, name, description, metric_type, category, sort_order, target_value')
     .eq('tenant_id', member.tenant_id)
     .eq('is_active', true)
     .order('category')
@@ -147,6 +148,7 @@ export default async function ScorecardPage({
       metric: {
         id: m.id,
         name: m.name,
+        description: m.description,
         metric_type: m.metric_type,
         target_value: m.target_value,
       },
