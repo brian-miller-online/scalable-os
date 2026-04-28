@@ -631,7 +631,8 @@ type MetricRowProps = {
   tenantId: string
   weekStart: string
   memberId: string
-  onInteraction: () => void
+  onFirstTouch: () => void
+  onSaveComplete: () => void
 }
 
 function formatDisplayValue(value: number | null, metricType: string): string {
@@ -652,7 +653,8 @@ export function MetricRow({
   tenantId,
   weekStart,
   memberId,
-  onInteraction,
+  onFirstTouch,
+  onSaveComplete,
 }: MetricRowProps) {
   const [value, setValue] = useState(
     currentEntry?.value != null ? String(currentEntry.value) : ''
@@ -697,13 +699,14 @@ export function MetricRow({
         }
         setSaved(true)
         setTimeout(() => setSaved(false), 300)
+        onSaveComplete()
       }
     },
-    [metric.id, weekStart, tenantId, memberId]
+    [metric.id, weekStart, tenantId, memberId, onSaveComplete]
   )
 
   function handleValueBlur() {
-    onInteraction()
+    onFirstTouch()
     const parsed = value.trim() ? parseFloat(value.replace(/[,$]/g, '')) : null
     if (parsed !== lastSaved.current.value) {
       doSave({ value: parsed, statusColor: color, statusNote: note || null })
@@ -711,7 +714,7 @@ export function MetricRow({
   }
 
   function handleColorSelect(newColor: StatusColor) {
-    onInteraction()
+    onFirstTouch()
     setColor(newColor)
     const parsed = value.trim() ? parseFloat(value.replace(/[,$]/g, '')) : null
     doSave({ value: parsed, statusColor: newColor, statusNote: note || null })
@@ -757,7 +760,7 @@ export function MetricRow({
           value={value}
           onChange={(e) => {
             setValue(e.target.value)
-            onInteraction()
+            onFirstTouch()
           }}
           onBlur={handleValueBlur}
           onKeyDown={(e) => {
@@ -789,7 +792,7 @@ export function MetricRow({
 - Value input strips `$` and `,` before parsing (handles user typing currency format).
 - Enter key blurs the input (triggers save).
 - Green flash: `bg-green-50` for 300ms on successful save.
-- `onInteraction` callback fires on first field interaction (for duration tracking).
+- `onFirstTouch` tracks first interaction (for duration tracking). `onSaveComplete` fires after each successful save (triggers duration logging).
 
 - [ ] **Step 2: Verify TypeScript compiles**
 
@@ -1038,32 +1041,29 @@ export function ScorecardBody({
   memberId: string
 }) {
   const firstInteraction = useRef<number | null>(null)
-  const interactionCount = useRef(0)
 
-  const handleInteraction = useCallback(() => {
+  const handleFirstTouch = useCallback(() => {
     if (firstInteraction.current === null) {
       firstInteraction.current = Date.now()
     }
-    interactionCount.current += 1
+  }, [])
 
-    // Log duration on every 3rd interaction and on each save
-    // (saves happen on blur which also triggers interaction)
-    if (firstInteraction.current) {
-      const durationSeconds = Math.round(
-        (Date.now() - firstInteraction.current) / 1000
-      )
-      const totalMetrics = categorizedMetrics.reduce(
-        (sum, group) => sum + group.metrics.length,
-        0
-      )
-      logEntryDuration({
-        tenantId,
-        memberId,
-        weekStart,
-        durationSeconds,
-        metricsFilled: totalMetrics,
-      })
-    }
+  const handleSaveComplete = useCallback(() => {
+    if (firstInteraction.current === null) return
+    const durationSeconds = Math.round(
+      (Date.now() - firstInteraction.current) / 1000
+    )
+    const totalMetrics = categorizedMetrics.reduce(
+      (sum, group) => sum + group.metrics.length,
+      0
+    )
+    logEntryDuration({
+      tenantId,
+      memberId,
+      weekStart,
+      durationSeconds,
+      metricsFilled: totalMetrics,
+    })
   }, [categorizedMetrics, tenantId, memberId, weekStart])
 
   return (
@@ -1083,7 +1083,8 @@ export function ScorecardBody({
                 tenantId={tenantId}
                 weekStart={weekStart}
                 memberId={memberId}
-                onInteraction={handleInteraction}
+                onFirstTouch={handleFirstTouch}
+                onSaveComplete={handleSaveComplete}
               />
             ))}
           </div>
@@ -1095,8 +1096,8 @@ export function ScorecardBody({
 ```
 
 **Key details:**
-- `firstInteraction` ref tracks when the user first touched any field.
-- Duration logged progressively (each save updates the event).
+- `handleFirstTouch` only sets the ref — zero server calls on keystrokes.
+- `handleSaveComplete` logs duration only after successful saves — fires 6-9 times total, not on every keystroke.
 - Server Component page does ALL data fetching; `ScorecardBody` is a thin client wrapper for interactivity + duration tracking.
 - All props are serializable (no Date objects, no functions from server).
 
